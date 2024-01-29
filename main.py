@@ -58,7 +58,7 @@ def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterati
     current_solution = initial_solution
     best_solution = current_solution
 
-    print("Iteration\tCurrent Cost\tNeighbor Cost\tProbability\tAcceptance\tBest Cost")
+    print("Iteration\tCurrent Cost\t\tNeighbor Cost\t\tProbability\tAcceptance\tBest Cost")
 
     for iteration in range(num_iterations):
         neighbor_solution = current_solution.generate_neighbor()
@@ -66,9 +66,10 @@ def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterati
         current_cost = current_solution.cost
         neighbor_cost = neighbor_solution.cost
 
+        energy_difference = current_cost - neighbor_cost
         # ---------------------------------- [ Choice of a neighboring solution ] ----------------------------------
         # Accept the neighbor if it's better or with a certain probability
-        probability = math.exp((current_cost - neighbor_cost) / temperature)
+        probability = math.exp((energy_difference) / temperature)
         acceptance = neighbor_cost < current_cost or random.uniform(0, 1) < probability
 
         if acceptance:
