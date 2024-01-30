@@ -11,47 +11,68 @@ class Node:
 class Solution:
     # ----------------------------------------- [ Initialization ] -----------------------------------------
     def __init__(self, node_list):
+        # Assign the provided node list to the 'Solution' attribute
         self.Solution = node_list
 
+        # Extract the IDs of nodes and store them in 'slt_representation'
         slt_representation = []           
         for i in range(0, len(node_list)):
             slt_representation.append(self.Solution[i].id)
         self.slt_representation = slt_representation
 
+        # Calculate the initial cost of the solution based on the distance matrix
         distance = 0
         for j in range(1, len(self.slt_representation) - 1):
             distance += matrix[self.slt_representation[j]-1][self.slt_representation[j + 1]-1]
         self.cost = distance
 
+        # Calculate the fitness value as the inverse of the cost
         self.fitness_value = 1 / self.cost
+
     # -------------------------------------- [ Neighborhood Generation ] --------------------------------------
     def generate_neighbor(self):
+        # Create a copy of the current solution
         neighbor = self.Solution.copy()
-        # Implement logic to modify the neighbor solution (e.g., swap two cities)
-        index1, index2 = random.sample(range(1, 58), 2)
-        neighbor[index1], neighbor[index2] = neighbor[index2], neighbor[index1]
+
+        # We implement the logic to modify the neighbor solution (e.g., swap two cities)
+        index1, index2 = random.sample(range(1, 58), 2) # Randomly select two indices to swap in the neighbor solution
+        neighbor[index1], neighbor[index2] = neighbor[index2], neighbor[index1] # Swap the cities at the selected indices in the neighbor solution
+
+        # Return the modified solution as a new Solution object
         return Solution(neighbor)
 
 # Function to create a random list of cities for the initial solution
 def create_random_list(n_list):
-    start = n_list[0]
-    temp = n_list[1:]
-    temp = random.sample(temp, len(temp))
-    temp.insert(0, start)
-    temp.append(start)
+    
+    start = n_list[0] # Select the starting city from the provided list
+    temp = n_list[1:] # Exclude the starting city and create a copy of the list
+    temp = random.sample(temp, len(temp)) # Shuffle the copy of the list randomly
+    temp.insert(0, start)  # Insert the starting city at the beginning of the shuffled list
+    temp.append(start) # Append the starting city again at the end of the list to form a closed loop
+    
+    # Return the randomly created list as the initial solution
     return temp
+
 
 # Function to create a distance matrix based on node coordinates
 def create_distance_matrix(node_list):
+    # Initialize a matrix with zeros for the number of nodes (N)
     matrix = [[0 for _ in range(N)] for _ in range(N)]
+
+    # Iterate over each pair of nodes to compute and populate the distances in the matrix
     for i in range(0, len(matrix)-1):
         for j in range(0, len(matrix[0])-1):
+            # Calculate the Euclidean distance between the nodes (cities)
             matrix[node_list[i].id][node_list[j].id] = math.sqrt(pow((node_list[i].x - node_list[j].x), 2) + pow((node_list[i].y - node_list[j].y), 2))
-    return matrix
+    #print(matrix)
+    return matrix # Return the computed distance matrix
+    
 
 # Cooling schedule function for simulated annealing
 def cooling_schedule(iteration):
+    # Calculate the temperature for the current iteration using an exponential decay 
     return initial_temperature * cooling_rate**iteration
+    # This temperature is essential for controlling the annealing process, gradually reducing the system’s randomness 
 
 # Lists to store iteration and corresponding costs for plotting
 iteration_list = []
