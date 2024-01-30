@@ -53,6 +53,10 @@ def create_distance_matrix(node_list):
 def cooling_schedule(iteration):
     return initial_temperature * cooling_rate**iteration
 
+# Lists to store iteration and corresponding costs for plotting
+iteration_list = []
+cost_list = []
+
 # Simulated Annealing algorithm
 def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterations, print_interval=100):
     current_solution = initial_solution
@@ -82,6 +86,9 @@ def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterati
         # Print information every 'print_interval' iterations
         if (iteration + 1) % print_interval == 0 or iteration == num_iterations - 1:
             print(f"{iteration + 1}\t\t{current_cost:.4f}\t\t{neighbor_cost:.4f}\t\t{probability:.4f}\t\t{acceptance}\t\t{best_solution.cost:.4f}")
+
+        iteration_list.append(iteration)
+        cost_list.append(best_solution.cost)
 
         temperature = cooling_schedule(iteration)
 
@@ -144,4 +151,14 @@ print("Shortest Path using Simulated Annealing:")
 print("----------------------------------------")
 print(Shortest_city_path_list)
 print("----------------------------------------------------------")
+
+# Plot the cost over iterations
+plt.figure()
+plt.plot(iteration_list, cost_list, label='Cost')
+plt.title("Cost over Iterations")
+plt.xlabel("Iteration")
+plt.ylabel("Cost")
+plt.legend()
+
 plt.show()
+
