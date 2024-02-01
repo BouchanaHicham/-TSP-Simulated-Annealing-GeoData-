@@ -15,12 +15,17 @@ class Solution:
         self.Solution = node_list
 
         # Extract the IDs of nodes and store them in 'slt_representation'
-        slt_representation = []           
+        slt_representation = []           # Cities List (but with indexes [1,3,12,42])
+        
         for i in range(0, len(node_list)):
             slt_representation.append(self.Solution[i].id)
+
         self.slt_representation = slt_representation
 
+        # print(slt_representation)
+
         # Calculate the initial cost of the solution based on the distance matrix
+        # --------------------- [ Calculate Cost ] ---------------------
         distance = 0
         for j in range(1, len(self.slt_representation) - 1):
             distance += matrix[self.slt_representation[j]-1][self.slt_representation[j + 1]-1]
@@ -28,6 +33,7 @@ class Solution:
 
         # Calculate the fitness value as the inverse of the cost
         self.fitness_value = 1 / self.cost
+        # ---------------------------------------------------------------
 
     # -------------------------------------- [ Neighborhood Generation ] --------------------------------------
     def generate_neighbor(self):
@@ -35,11 +41,13 @@ class Solution:
         neighbor = self.Solution.copy()
 
         # We implement the logic to modify the neighbor solution (e.g., swap two cities)
-        index1, index2 = random.sample(range(1, 58), 2) # Randomly select two indices to swap in the neighbor solution
+        index1, index2 = random.sample(range(1, N), 2) # Randomly select two indices to swap in the neighbor solution
         neighbor[index1], neighbor[index2] = neighbor[index2], neighbor[index1] # Swap the cities at the selected indices in the neighbor solution
 
         # Return the modified solution as a new Solution object
         return Solution(neighbor)
+
+# --------------------------------------------- [ Create Initial Random List ] ---------------------------------------------
 
 # Function to create a random list of cities for the initial solution
 def create_random_list(n_list):
@@ -53,7 +61,8 @@ def create_random_list(n_list):
     # Return the randomly created list as the initial solution
     return temp
 
-
+# --------------------------------------------- [ Distance Matrix ] ---------------------------------------------
+ 
 # Function to create a distance matrix based on node coordinates
 def create_distance_matrix(node_list):
     # Initialize a matrix with zeros for the number of nodes (N)
@@ -62,21 +71,27 @@ def create_distance_matrix(node_list):
     # Iterate over each pair of nodes to compute and populate the distances in the matrix
     for i in range(0, len(matrix)-1):
         for j in range(0, len(matrix[0])-1):
-            # Calculate the Euclidean distance between the nodes (cities)
+            # Calculate the Euclidean distance between the nodes (cities) 
             matrix[node_list[i].id][node_list[j].id] = math.sqrt(pow((node_list[i].x - node_list[j].x), 2) + pow((node_list[i].y - node_list[j].y), 2))
     #print(matrix)
+    print(matrix)
     return matrix # Return the computed distance matrix
-    
+
+
+# --------------------------------------------- [ Cooling Schedule ] ---------------------------------------------
 
 # Cooling schedule function for simulated annealing
 def cooling_schedule(iteration):
     # Calculate the temperature for the current iteration using an exponential decay 
     return initial_temperature * cooling_rate**iteration
-    # This temperature is essential for controlling the annealing process, gradually reducing the system’s randomness 
+    # This temperature is essential for controlling the annealing process, gradually reducing the system’s randomness
+ 
+# ------------------------------------------------------------------------------------------------
 
 # Lists to store iteration and corresponding costs for plotting
 iteration_list = []
 cost_list = []
+
 
 # Simulated Annealing algorithm
 def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterations, print_interval=100):
@@ -92,9 +107,11 @@ def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterati
         neighbor_cost = neighbor_solution.cost
 
         energy_difference = current_cost - neighbor_cost
+
         # ---------------------------------- [ Choice of a neighboring solution ] ----------------------------------
         # Accept the neighbor if it's better or with a certain probability
-        probability = math.exp((energy_difference) / temperature)
+        probability = math.exp(min(energy_difference / temperature, 700))
+        # This ensures that as the temperature decreases, the probability of accepting worse solutions decreases.
         acceptance = neighbor_cost < current_cost or random.uniform(0, 1) < probability
 
         if acceptance:
@@ -108,39 +125,52 @@ def simulated_annealing(initial_solution, temperature, cooling_rate, num_iterati
         if (iteration + 1) % print_interval == 0 or iteration == num_iterations - 1:
             print(f"{iteration + 1}\t\t{current_cost:.4f}\t\t{neighbor_cost:.4f}\t\t{probability:.4f}\t\t{acceptance}\t\t{best_solution.cost:.4f}")
 
+        # ---------- [ Plot ] ----------
         iteration_list.append(iteration)
         cost_list.append(best_solution.cost)
+        # ------------------------------
 
+        # ---------- [ Cooling Temp ] ----------
         temperature = cooling_schedule(iteration)
+        # ------------------------------
 
     return best_solution
 
 # Read data from the file
-file_name = "data_set"
+file_name = "berlin_data_set"
 dataset = []
 
 with open(file_name, "r") as f:
-    for line in f:
-        new_line = line.strip()
-        new_line = new_line.split(" ")
-        id, y, x = new_line[0], new_line[1], new_line[2]
-        dataset.append(Node(id=id, x=x, y=y))
+    for line in f: # Iterate over each line in the file
+        new_line = line.strip()         # Remove leading and trailing whitespaces from the line
+        new_line = new_line.split(" ")         # Split the line into a list of strings using the space character as a delimiter
+        id, y, x = new_line[0], new_line[1], new_line[2]         # Assign the first, second, and third elements of the split list to variables id, y, and x respectively
 
-N = 58
+        dataset.append(Node(id=id, x=x, y=y))         # Create a new Node object with the extracted id, x, and y values, and append it to the dataset list
+
+N = 52
 matrix = create_distance_matrix(dataset)
+
+
+#[ [0, distance(1 to 2), distance(1 to 3)],
+#  [distance(2 to 1), 0, distance(2 to 3)],
+#  [distance(3 to 1), distance(3 to 2), 0]]
 
 # Set parameters for Simulated Annealing
 initial_temperature = 1000
 cooling_rate = 0.99
-num_iterations_sa = 1000
+num_iterations_sa = 10000
+
 
 # Run Simulated Annealing
 initial_solution_sa = Solution(create_random_list(dataset))
 final_solution_sa = simulated_annealing(initial_solution_sa, initial_temperature, cooling_rate, num_iterations_sa, print_interval=100)
 
+
 # Plot the best path
 x_list = [node.x for node in final_solution_sa.Solution]
 y_list = [node.y for node in final_solution_sa.Solution]
+
 
 fig, ax = plt.subplots()
 plt.scatter(x_list, y_list)
@@ -148,7 +178,6 @@ ax.plot(x_list, y_list, '--', lw=0.1, color='black', ms=10)
 ax.set_title("TSP using Simulated Annealing")
 ax.set_xlabel("X-coordinate")
 ax.set_ylabel("Y-coordinate")
-
 
 
 # Print the best path in terms of city names
@@ -173,6 +202,8 @@ print("----------------------------------------")
 print(Shortest_city_path_list)
 print("----------------------------------------------------------")
 
+#print("Matrix:",matrix)
+
 # Plot the cost over iterations
 plt.figure()
 plt.plot(iteration_list, cost_list, label='Cost')
@@ -180,6 +211,4 @@ plt.title("Cost over Iterations")
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.legend()
-
 plt.show()
-
